@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+		<title>MySQL Replication to AWS RDS with SSL</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/black.css">
@@ -24,8 +24,258 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>MySQL Replication to AWS RDS with SSL</section>
-				<section>Slide 2</section>
+				<section>
+          MySQL Replication to AWS RDS with SSL
+        </section>
+        <section>
+          you currently have a MySQL database
+        </section>
+        <section>
+          <img src="images/datacenter.jpg" style="border:none" alt="datacenter"/>
+        </section>
+        <section>
+          and you're thinking about moving your database
+        </section>
+        <section>
+          <img src="images/cloud.jpg" style="border:none" alt="cloud"/>
+        </section>
+        <section>
+          if your dataset is small, like maybe under a gigabyte or 2,
+        </section>
+        <section>
+          <img src="images/sneakernet.png" style="border:none" alt="sneakernet"/>
+        </section>
+        <section>
+          but if your dataset is bigger, say a few 100 gigabytes, it's going to take hours to transfer and load your data
+        </section>
+        <section>
+          <img src="images/big-data.jpg" style="border:none" alt="big-data"/>
+        </section>
+        <section>
+          luckily, there's this thing called replication
+        </section>
+        <section>
+          replication is nothing new, it has been around for decades
+        </section>
+        <section>
+          you can setup your new database ahead of time and continuously keep it updated
+        </section>
+        <section>
+          so your search for a cloud provider brought you to
+        </section>
+        <section>
+          <img src="images/amazon.jpg" style="border:none"/ alt="amazon">
+        </section>
+        <section>
+          where they have this great Relational Database Service
+        </section>
+        <section>
+          you pick the MySQL option, and set about configuring it so that you can replicate your 100's of gigabytes of data
+        </section>
+        <section>
+          <img src="images/rds_set_external_master.png" style="border:none"/>
+        </section>
+        <section>
+          ssl_encryption, yes please
+        </section>
+        <section>
+          until you look at the documentation...
+        </section>
+        <section>
+          <img src="images/no-ssl.png" style="border:none"/>
+        </section>
+        <section>
+          apparently, amazon expects you to not worry about transfering your data in the clear over the internet
+        </section>
+        <section>
+          this is usually not good
+        </section>
+        <section>
+          so, what are your options?
+          <p class="fragment">
+            we came up with 3...
+          </p>
+        </section>
+        <section>
+          <img src="images/farragut-small.jpg" alt="By Mathew Brady - ID:HD-SN-99-01789This media is available in the holdings of the National Archives and Records Administration, cataloged under the ARC Identifier (National Archives Identifier) 529975.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing for more information.English | Español | Français | Italiano | Македонски | മലയാളം | Nederlands | Polski | Português | Русский | Slovenščina | Türkçe | Українська | Tiếng Việt | 中文（简体） | 中文（繁體） | +/−, Public Domain, https://commons.wikimedia.org/w/index.php?curid=1294425" style="border:none"/>
+        </section>
+        <section>
+          this is usually not a good option
+        </section>
+        <section>
+          <img src="images/tunnel.jpg" style="border:none"/>
+        </section>
+        <section>
+          quite easy to setup a tunnel on an intermediate server
+        </section>
+        <section>
+          <pre>
+            <code data-trim data-noescape>
+              ssh -n -N -T -L 3306:localhost:3306 tunneluser@192.168.10.1
+            </code>
+          </pre>
+          <div style="font-size:66%">
+            <p class="fragment">redirect stdin</p>
+            <p class="fragment">do not execute a remote command</p>
+            <p class="fragment">disable pseudo-terminal allocation</p>
+            <p class="fragment">forward local port to remote host:port</p>
+          </div>
+        </section>
+        <section>
+          the server hosting the tunnel should
+          <p class="fragment">be an ec2 instance</p>
+          <p class="fragment">be in the same security group as your rds instance</p>
+          <p class="fragment">have a public ip address</p>
+          <p class="fragment">not allow inbound traffic from the internet</p>
+        </section>
+        <section>
+          this setup
+          <p class="fragment">
+            is relatively easy and straight-forward
+          </p>
+          <p class="fragment">
+            can be run with minimal hardware/resources
+          </p>
+          <p class="fragment">
+            also assumes that you're able to load the rds instance using a mysqldump file
+          </p>
+        </section>
+        <section>
+          there is no special configuration for securing your data.
+          it's all handled via the ssh tunnel
+        </section>
+        <section>
+          so what if you don't have a mysqldump?
+          <p class="fragment">
+            or want finer control over the data being replicated?
+          </p>
+        </section>
+        <section>
+          <img src="images/relay-small.jpg" style="border:none" alt="relay"/>
+        </section>
+        <section>
+          a relay server is another database instance that acts as an intermediary
+        </section>
+        <section>
+          it is a fully functional database instance
+          <p class="fragment">
+            with replication filters for specific databases and tables
+          </p>
+          <p class="fragment">
+            or
+          </p>
+        </section>
+        <section>
+          <img src="images/black-hole.jpg" style="border:none" alt=""By Deutsch: Ute Kraus, Physikdidaktik Ute Kraus, Universität Hildesheim, Tempolimit Lichtgeschwindigkeit, (Milchstraßenpanorama im Hintergrund: Axel Mellinger) English: Ute Kraus, Physics education group Kraus, Universität Hildesheim, Space Time Travel, (background image of the milky way: Axel Mellinger) [CC BY-SA 2.0 de (http://creativecommons.org/licenses/by-sa/2.0/de/deed.en) or CC BY-SA 2.5 (http://creativecommons.org/licenses/by-sa/2.5)], via Wikimedia Commons"/>
+        </section>
+        <section>
+          blackhole storage engines do not store any data, they just log inserts, updates and deletes, and pass data along
+        </section>
+        <section>
+          relay servers are more complicated to setup, however they provide more flexibility
+        </section>
+        <section>
+          before setting up your relay, best to verify that your existing database supports ssl
+          <pre>
+            <code>
+              show global variables like "have%ssl%";
+              +---------------+----------+
+              | Variable_name | Value    |
+              +---------------+----------+
+              | have_openssl  | DISABLED |
+              | have_ssl      | DISABLED |
+              +---------------+----------+
+            </code>
+          </pre>
+          <p class="fragment">
+            DISABLED or YES is what you're looking for,
+          </p>
+          <p class="fragment">
+            if no, then SSL with this server is not possible
+          </p>
+        </section>
+        <section>
+          just like the server hosting the tunnel, the relay should
+          <p class="fragment">be an ec2 instance</p>
+          <p class="fragment">be in the same security group as your rds instance</p>
+          <p class="fragment">have a public ip address</p>
+          <p class="fragment">not allow inbound traffic from the internet</p>
+        </section>
+        <section>
+          you'll need some ssl certs
+          <p>
+            one for the original master server
+            <pre>
+              <code>
+openssl req -new -x509 -nodes -days 360 -key ca-key.pem -out ca.pem
+openssl req -newkey rsa:2048 -days 360 -nodes -keyout \
+  server-key.pem -out server-req.pem
+openssl rsa -in server-key.pem -out server-key.pem
+openssl x509 -req -in server-req.pem -days 360 -CA ca.pem -CAkey \
+  ca-key.pem -set_serial 01 -out server-cert.pem
+              </code>
+            </pre>
+          </p>
+        </section>
+        <section>
+        reference these in the master server's my.cnf
+        <pre>
+          <code>
+ssl-ca=/etc/mysql/certs/ca-cert.pem
+ssl-cert=/etc/mysql/certs/server-cert.pem
+ssl-key=/etc/mysql/certs/server-key.pem
+          </code>
+        </pre>
+        </section>
+        <section>
+            and one for the relay acting as a client
+            <p class="fragment">
+              <pre>
+                <code>
+openssl req -newkey rsa:2048 -days 360 -nodes -keyout \
+  client-key.pem -out client-req.pem
+openssl rsa -in client-key.pem -out client-key.pem
+openssl x509 -req -in client-req.pem -days 360 -CA ca.pem -CAkey \
+  ca-key.pem -set_serial 01 -out client-cert.pem
+                </code>
+              </pre>
+            </p>
+          </p>
+        </section>
+        <section>
+          configure the relay to use the client cert
+              <pre>
+                <code>
+  CHANGE MASTER TO
+    MASTER_SSL=1,
+    MASTER_SSL_CA='/etc/mysql/certs/ca-cert.pem',
+    MASTER_SSL_CERT='/etc/mysql/certs/client-cert.pem',
+    MASTER_SSL_KEY='/etc/mysql/certs/client-key.pem'
+                </code>
+              </pre>
+        </section>
+        <section>
+          configure the rds instance to replicate from the relay
+          <pre>
+            <code>
+CALL mysql.rds_set_external_master (
+  'sum.tin.pri.v8',
+  3306,
+  'replication_user',
+  'replication_user_password',
+  'mysql-binlogs.000001',
+  1,
+  0
+);
+            </code>
+          </pre>
+        </section>
+        <section>
+          make sure that the relay and rds have the same innodb settings as the master
+        </section>
+        <section>
+          ask me for a more complete set of instructions
+        </section>
 			</div>
 		</div>
 
